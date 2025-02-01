@@ -3,7 +3,7 @@ name: Build and Deploy NextJS App to S3 and CloudFront
 on:
   push:
     branches:
-      - main # or 'dev' depending on the branch you're using
+      - dev
 
 permissions:
   id-token: write
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v2
 
       - name: Set up Node.js
@@ -23,11 +23,14 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install Yarn
+        run: npm install -g yarn
 
-      - name: Build Next.js app
-        run: npm run build
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -37,7 +40,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Deploy to S3
-        run: aws s3 sync ./out s3://your-bucket-name --delete
+        run: aws s3 sync ./out s3://alex-devesh-gordon
 
-      - name: Invalidate CloudFront cache
+      - name: Invalidate CloudFront Cache
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
