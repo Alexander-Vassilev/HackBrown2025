@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-export default async function handler(req: { method: string; body: { name: any; description: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: unknown): void; new(): any; }; }; }) {
+export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const response = await fetch('https://jkdya16z5b.execute-api.us-east-2.amazonaws.com/', {
