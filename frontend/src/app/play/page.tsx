@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import styles from './styles.module.css'
 
 export default function Home() {
   const [name, setName] = useState<string>("Bob");
