@@ -7,7 +7,7 @@ import gsap from 'gsap'
 import './global.css'
 import axios from 'axios'
 import { useRouter } from 'next/navigation';
-import GameRefiner from './GameRefiner'
+import GameRefiner from './gameRefiner'
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null)
