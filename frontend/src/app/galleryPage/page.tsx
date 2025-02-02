@@ -26,9 +26,9 @@ export default function GalleryPage() {
     fetchSavedGames();
   }, []);
 
-  const handleGameClick = async (gameId: string) => {
+  const handleGameClick = async (game: object) => {
+    localStorage.setItem("game", JSON.stringify(game))
     router.push("../")
-    
   };
 
   return (
@@ -39,7 +39,7 @@ export default function GalleryPage() {
           <p>No saved games found.</p>
         ) : (
           savedGames.map((game) => (
-            <div key={game._id} onClick={() => handleGameClick(game._id)}>
+            <div key={game._id} onClick={() => handleGameClick(game)}>
               <GameCard game={game} />
             </div>
           ))

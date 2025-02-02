@@ -7,7 +7,7 @@ export default function GameCard({ game }: { game: any }) {
       <p className="mt-2 text-gray-400">{game.description}</p>
       <button
         className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg"
-        onClick={() => alert(`Loading ${game.name}...`)}
+        // onClick={() => alert(`Loading ${game.name}...`)}
       >
         Play
       </button>

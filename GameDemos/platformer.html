@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platformer Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #87CEEB;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #A9A9A9;
+            border: 2px solid black;
+        }
+        .platform {
+            position: absolute;
+            background-color: #228B22;
+        }
+        .enemy {
+            background-color: red;
+            width: 30px;
+            height: 30px;
+            position: absolute;
+        }
+        .player {
+            width: 30px;
+            height: 30px;
+            background-color: blue;
+            position: absolute;
+        }
+        #message {
+            font-size: 30px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Platformer Game</h1>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<p id="message"></p>
+
+<script>
+// Game Variables
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gravity = 0.8;
+const jumpStrength = -15;
+let isJumping = false;
+let isFalling = false;
+let score = 0;
+
+// Player object
+const player = {
+    x: 50,
+    y: canvas.height - 100,
+    width: 30,
+    height: 30,
+    speed: 5,
+    dx: 0,
+    dy: 0,
+    jumpHeight: 0,
+};
+
+// Enemies
+let enemies = [
+    { x: 500, y: canvas.height - 70, dx: 2 },
+    { x: 300, y: canvas.height - 150, dx: -2 },
+];
+
+// Platforms
+const platforms = [
+    { x: 0, y: canvas.height - 50, width: canvas.width, height: 20 }, // Ground platform
+    { x: 200, y: canvas.height - 200, width: 200, height: 20 },
+    { x: 500, y: canvas.height - 300, width: 150, height: 20 },
+];
+
+// Game State
+let gameOver = false;
+
+// Event Listener for Key Press
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'd') {
+        player.dx = player.speed;
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'a') {
+        player.dx = -player.speed;
+    }
+    if (e.key === ' ' && !isJumping) {
+        player.dy = jumpStrength;
+        isJumping = true;
+    }
+});
+
+// Event Listener for Key Release
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'a') {
+        player.dx = 0;
+    }
+});
+
+// Game Loop
+function gameLoop() {
+    if (gameOver) return;
+
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Update Game Elements
+function update() {
+    if (player.y + player.height >= canvas.height) {
+        player.y = canvas.height - player.height;
+        player.dy = 0;
+        isJumping = false;
+        isFalling = false;
+    }
+
+    player.x += player.dx;
+    player.y += player.dy;
+    player.dy += gravity; // Apply gravity
+
+    checkCollisions();
+    moveEnemies();
+}
+
+// Draw Game Elements
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw player
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Draw platforms
+    ctx.fillStyle = '#228B22';
+    platforms.forEach(platform => {
+        ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+    });
+
+    // Draw enemies
+    enemies.forEach(enemy => {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(enemy.x, enemy.y, 30, 30);
+    });
+
+    // Check for win condition
+    if (enemies.length === 0) {
+        document.getElementById('message').innerText = "You Win!";
+        gameOver = true;
+    }
+
+    // Check for game over
+    if (gameOver) {
+        document.getElementById('message').innerText = "Game Over!";
+    }
+}
+
+// Check Collisions
+function checkCollisions() {
+    // Check if player collides with enemies
+    enemies.forEach((enemy, index) => {
+        if (player.x < enemy.x + 30 && player.x + player.width > enemy.x && player.y < enemy.y + 30 && player.y + player.height > enemy.y) {
+            if (player.dy > 0) {
+                enemies.splice(index, 1); // Enemy disappears if player lands on top
+                score++;
+            } else {
+                gameOver = true; // Player collides with enemy
+            }
+        }
+    });
+
+    // Check if player is on a platform
+    platforms.forEach(platform => {
+        if (player.y + player.height <= platform.y && player.y + player.height + player.dy >= platform.y && player.x + player.width > platform.x && player.x < platform.x + platform.width) {
+            player.dy = 0;
+            player.y = platform.y - player.height;
+            isJumping = false;
+        }
+    });
+}
+
+// Move Enemies
+function moveEnemies() {
+    enemies.forEach(enemy => {
+        enemy.x += enemy.dx;
+        if (enemy.x <= 0 || enemy.x + 30 >= canvas.width) {
+            enemy.dx = -enemy.dx; // Reverse direction when hitting wall
+        }
+    });
+}
+
+// Start Game
+gameLoop();
+
+</script>
+
+</body>
+</html>
