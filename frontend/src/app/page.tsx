@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState, } from 'react'
 import gsap from 'gsap'
 import './global.css'
+import axios from 'axios'
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -12,6 +13,13 @@ export default function Home() {
   const loopRef = useRef<HTMLVideoElement>(null)
   const [formData, setFormData] = useState({ name: '', email: '' })
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight })
+
+  const generate = async(prompt: string) => {
+    let res = await axios.post(process.env.LLM_ENDPOINT as string, {
+      prompt
+    })
+    console.log(res)
+  }
 
   useEffect(() => {
     if (videoRef.current) {
@@ -41,8 +49,6 @@ export default function Home() {
       console.log(window.innerWidth)
     })
   }, []);
-
-  
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -142,7 +148,7 @@ export default function Home() {
           <div className='w-full p-4 flex flex-row justify-center items-center gap-x-4'>
             <button
               className="bg-gray-500 text-white px-4 py-2 rounded-lg"
-              onClick={() => alert('Loading Screen...')}
+              onClick={() => generate("What is 1 + 1")}
             >
               Load Screen
             </button>
