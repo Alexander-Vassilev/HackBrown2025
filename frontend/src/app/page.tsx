@@ -61,7 +61,7 @@ export default function Home() {
   const [generating, setGenerating] = useState<boolean>(false);
   const [description, setDescription] = useState<string>("");
   const [message, setMessage] = useState<string>("");
-  const [currentGame, setCurrentGame] = useState(null)
+  const [currentGame, setCurrentGame] = useState(null);
   const [gameCreation, setGameCreation] = useState<string>("");
 
   const gameCreationScreen = ()=> {

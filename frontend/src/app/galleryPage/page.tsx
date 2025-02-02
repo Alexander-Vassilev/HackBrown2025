@@ -27,7 +27,7 @@ export default function GalleryPage() {
   }, []);
 
   const handleGameClick = async (gameId: string) => {
-    router.push("../")
+    router.push("/sample")
     
   };
 
