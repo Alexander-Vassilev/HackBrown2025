@@ -7,8 +7,7 @@ import gsap from 'gsap'
 import './global.css'
 import axios from 'axios'
 import { useRouter } from 'next/navigation';
-
-
+import GameRefiner from './GameRefiner'
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -17,8 +16,7 @@ export default function Home() {
   const gameRenderer = useRef<HTMLDivElement>(null)
   const restartGameCreationButton = useRef<HTMLButtonElement>(null)
   const [formData, setFormData] = useState({ name: '', email: '' })
-  const [savedGames, setSavedGames] = useState<any[]>([]) // List of saved games
-
+  let initGameLoaded = false // List of saved games
 
   const generate = async (prompt: string) => {
     const headers = {
@@ -31,19 +29,21 @@ export default function Home() {
     if (videoRef.current) {
       videoRef.current.muted = true; // Ensure it's muted
       videoRef.current.play().catch((err) => console.error("Video play failed:", err));
+
       videoRef.current.addEventListener("timeupdate", () => {
-        if (Math.round(videoRef.current!.currentTime) == 6) {
+        if (Math.round(videoRef.current!.currentTime) == 6 && initGameLoaded == false) {
+          initGameLoaded = true
           gsap.to(gameScreen.current, {
             opacity: 1,
             duration: 1,
             ease: "power1.inOut"
           })
+          gsap.to(restartGameCreationButton.current, {
+            opacity: 1,
+            duration: 1
+          })
+          initSavedGame()
         }
-
-        gsap.to(restartGameCreationButton.current, {
-          opacity: 1,
-          duration: 1
-        })
       })
       videoRef.current.addEventListener("ended", () => {
         gsap.to(videoRef.current, {
@@ -57,6 +57,7 @@ export default function Home() {
     setGameCreation(gameRenderer.current!.innerHTML)
   }, []);
 
+
   const [name, setName] = useState<string>("");
   const [generating, setGenerating] = useState<boolean>(false);
   const [description, setDescription] = useState<string>("");
@@ -64,7 +65,66 @@ export default function Home() {
   const [currentGame, setCurrentGame] = useState(null)
   const [gameCreation, setGameCreation] = useState<string>("");
 
-  const gameCreationScreen = ()=> {
+  const handleGameUpdate = (refinedGame) => {
+    setCurrentGame(refinedGame);
+    gameRenderer.current!.innerHTML = refinedGame["html-css"];
+
+    let gameScript = document.createElement("script");
+    gameScript.innerHTML = refinedGame["script"];
+    document.body.appendChild(gameScript);
+  };
+
+  const initSavedGame = () => {
+    let game = localStorage.getItem('game')
+    if (game) {
+      let parsed_game = JSON.parse(game);
+      console.log(parsed_game)
+      gameRenderer.current!.innerHTML = parsed_game["gameCode"]
+
+      let gameScript = document.createElement("script");
+      gameScript.innerHTML = parsed_game["gameScript"]
+      document.body.appendChild(gameScript)
+
+      let formatted = {name: parsed_game["name"], description: parsed_game["description"], "html-css": parsed_game["gameCode"], script: parsed_game["gameScript"]}
+      setCurrentGame(formatted)
+    }
+    localStorage.removeItem("game")
+  }
+
+  useEffect(() => {
+    if (!currentGame) return;
+
+    let isMounted = true;  // ✅ Prevent state updates if unmounted
+
+    const saveGame = async () => {
+      try {
+        const response = await fetch("/api/games", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            description,
+            gameCode: currentGame["html-css"],
+            gameScript: currentGame["script"]
+          }),
+        });
+
+        const data = await response.json();
+        console.log("Game saved:", data);
+      } catch (error) {
+        console.error("API error:", error);
+      }
+    };
+
+    saveGame();
+
+    // return () => {
+    //   isMounted = false; // ✅ Cleanup to avoid state update after unmount
+    // };
+  }, [currentGame]);
+
+
+  const gameCreationScreen = () => {
     setCurrentGame(null)
     gameRenderer.current!.innerHTML = gameCreation
   }
@@ -72,7 +132,7 @@ export default function Home() {
   const router = useRouter();
 
   const generateGame = async () => {
-      
+
     setGenerating(true)
 
     let res = await generate(`Create a embeded js game in a div named ${name} about ${description}.
@@ -90,8 +150,10 @@ export default function Home() {
 
     setGenerating(false)
 
-    // console.log(res.data.body["response"])
+    console.log(res.data.body["response"])
     let generated_res = JSON.parse(res.data.body["response"])
+
+    console.log(generated_res)
     setCurrentGame(generated_res)
     console.log(name)
     console.log(description)
@@ -118,28 +180,9 @@ export default function Home() {
       }
     }
 
-    if (currentGame) {
-      try {
-        const response = await fetch("/api/addGame", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            description,
-            gameCode: currentGame["html-css"],
-            gameScript: currentGame["script"]
-          }),
-        });
+    console.log(currentGame)
+    // go to useEffect of currentGame
 
-        const data = await response.json();
-        setMessage(data.message || "Error adding game.");
-      } catch (error) {
-        setMessage("Error connecting to API.");
-        console.error(error);
-      }
-    }
   };
 
 
@@ -149,7 +192,7 @@ export default function Home() {
   };
 
   return (
-    <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+    <div className='overflow-hidden' style={{ position: 'relative', height: '100vh', width: '100vw' }}>
       {/* Video background */}
       <video
         ref={loopRef}
@@ -230,7 +273,7 @@ export default function Home() {
           {message && <p className="mt-4 text-green-600 font-semibold">{message}</p>}
 
           {/* Bottom buttons */}
-          <div className='w-full p-4 flex flex-row justify-center items-center gap-x-4'>
+          {/* <div className='w-full p-4 flex flex-row justify-center items-center gap-x-4'>
             <button
               className="bg-gray-500 text-white px-4 py-2 rounded-lg"
               onClick={() => generate("What is 1 + 1")}
@@ -240,31 +283,39 @@ export default function Home() {
             <a href="/play"><button
               className="bg-green-500 text-white px-4 py-2 rounded-lg">
               Next Page</button></a>
-          </div>
+          </div> */}
           <div className="mt-6">
-          <button
-            onClick={handleAllGames}
-            className="px-6 py-2 bg-blue-600 rounded-lg text-white font-semibold"
-          >
-            All Games
-          </button>
+            <button
+              onClick={handleAllGames}
+              className="px-6 py-2 bg-blue-600 rounded-lg text-white font-semibold"
+            >
+              See Generate Games
+            </button>
 
-        </div>
+          </div>
         </div>
       </div>
       <div className='absolute bottom-0 w-full flex justify-center'>
         <div className='h-[77%] w-[60%] bg-transparent flex justify-start'>
           <button
             ref={restartGameCreationButton}
-            onClick={gameCreationScreen}
+            onClick={() => window.location.reload()}
             className="w-[17%] p-4 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition opacity-0"
           >
             New Game
           </button>
 
-    </div>
         </div>
-      </div>
+      </div>{
+        currentGame != null ?
+        <div className="mt-6 w-full max-w-md px-4">
+            <GameRefiner
+              currentGame={currentGame}
+              onGameUpdate={handleGameUpdate}
+            />
+          </div> : ""
+      }
+    </div>
 
 
   )
