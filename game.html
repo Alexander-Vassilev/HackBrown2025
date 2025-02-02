@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maze Game</title>
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #e0e0e0;
+}
+
+#maze {
+  display: grid;
+  width: 90vw; /* 90% of the viewport width */
+  height: 90vh; /* 90% of the viewport height */
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  gap: 2px;
+  position: relative;
+}
+
+.cell {
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+}
+
+.wall {
+  background-image: url('https://mario.wiki.gallery/images/thumb/3/31/NSMBDS_Brick_Block_Artwork.png/1200px-NSMBDS_Brick_Block_Artwork.png');
+  background-size: cover;
+}
+
+.player {
+  background-image: url('https://target.scene7.com/is/image/Target/GUEST_cf4773e6-afec-4aa1-89e7-74b7dfc09973');
+  background-size: cover;
+  background-position: center;
+  border-radius: 0;
+}
+
+.enemy {
+  background-image: url('https://media.zummocorp.com/Fruits/naranja-at-2x-1689333993o7yxJ.webp');
+  background-size: cover;
+  border-radius: 0;
+}
+
+.goal {
+  background-color: green;
+}
+
+#message {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+  </style>
+</head>
+<body>
+
+<div id="message">Use arrow keys or WASD to move. Reach the goal to win!</div>
+<div id="maze"></div>
+
+<script>
+  const mazeSize = 10;
+  const maze = document.getElementById('maze');
+  let playerPos = { x: 0, y: 0 };
+  let enemyPos = { x: 8, y: 8 };
+  let goalPos = { x: 9, y: 9 };
+  let gameOver = false;
+
+  function createMaze() {
+    maze.innerHTML = '';
+    for (let y = 0; y < mazeSize; y++) {
+      for (let x = 0; x < mazeSize; x++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        if (Math.random() < 0.2) {
+          cell.classList.add('wall');
+        }
+        maze.appendChild(cell);
+      }
+    }
+    setPlayer(playerPos);
+    setEnemy(enemyPos);
+    setGoal(goalPos);
+  }
+
+  function setPlayer(pos) {
+    const index = pos.y * mazeSize + pos.x;
+    const playerCell = maze.children[index];
+    playerCell.classList.add('player');
+  }
+
+  function setEnemy(pos) {
+    const index = pos.y * mazeSize + pos.x;
+    const enemyCell = maze.children[index];
+    enemyCell.classList.add('enemy');
+  }
+
+  function setGoal(pos) {
+    const index = pos.y * mazeSize + pos.x;
+    const goalCell = maze.children[index];
+    goalCell.classList.add('goal');
+  }
+
+  function movePlayer(dx, dy) {
+    if (gameOver) return;
+
+    const newPos = { x: playerPos.x + dx, y: playerPos.y + dy };
+    if (isValidMove(newPos)) {
+      const oldIndex = playerPos.y * mazeSize + playerPos.x;
+      maze.children[oldIndex].classList.remove('player');
+
+      playerPos = newPos;
+      setPlayer(playerPos);
+
+      checkGameOver();
+    }
+  }
+
+  function isValidMove(pos) {
+    if (pos.x < 0 || pos.x >= mazeSize || pos.y < 0 || pos.y >= mazeSize) return false;
+    const index = pos.y * mazeSize + pos.x;
+    return !maze.children[index].classList.contains('wall');
+  }
+
+  function checkGameOver() {
+    if (playerPos.x === enemyPos.x && playerPos.y === enemyPos.y) {
+      gameOver = true;
+      document.getElementById('message').textContent = "Game Over! Press F5 to restart.";
+    } else if (playerPos.x === goalPos.x && playerPos.y === goalPos.y) {
+      gameOver = true;
+      document.getElementById('message').textContent = "You Win! Press F5 to restart.";
+    }
+  }
+
+  function moveEnemy() {
+    if (gameOver) return;
+    const directions = [
+      { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
+    ];
+    const direction = directions[Math.floor(Math.random() * directions.length)];
+    const newPos = { x: enemyPos.x + direction.dx, y: enemyPos.y + direction.dy };
+
+    if (isValidMove(newPos)) {
+      const oldIndex = enemyPos.y * mazeSize + enemyPos.x;
+      maze.children[oldIndex].classList.remove('enemy');
+
+      enemyPos = newPos;
+      setEnemy(enemyPos);
+    }
+    setTimeout(moveEnemy, 1000);
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (gameOver) return;
+
+    switch (event.key) {
+      case 'ArrowUp':
+      case 'w':
+        movePlayer(0, -1);
+        break;
+      case 'ArrowDown':
+      case 's':
+        movePlayer(0, 1);
+        break;
+      case 'ArrowLeft':
+      case 'a':
+        movePlayer(-1, 0);
+        break;
+      case 'ArrowRight':
+      case 'd':
+        movePlayer(1, 0);
+        break;
+    }
+  });
+
+  createMaze();
+  moveEnemy();
+</script>
+
+</body>
+</html>
