@@ -146,6 +146,7 @@ export default function Home() {
       - Include a legend on the top of the game for controls.
       - Include the title of the game on the top (make it standout).
       - For any texts, make sure it contrasts with the background.
+      - For sprites, you can use the following paths: "player1.png", "player2.png", "tree.png", "car.png". Make sure to resize them.
       - For the script, makes sure it runs immediately, do not use an event listener to initialize it.`)
 
     setGenerating(false)
@@ -267,6 +268,7 @@ export default function Home() {
               >
                 Submit
               </button>
+              
             }
           </form>
 

@@ -24,6 +24,7 @@ const GameRefiner = ({ currentGame, onGameUpdate }) => {
         - Preserve game title and text contrast
         - Return JSON with fields: chain-of-thought, game-details, html-css, script
         - Script must run immediately without initialization listener
+        - For sprites, you can use the following paths: "player1.png", "player2.png", "tree.png", "car.png". Make sure to resize them.
         - Return parsable RAW JSON, no code blocks. DO NOT HAVE (\`\`\`json).
         
         
