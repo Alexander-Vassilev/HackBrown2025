@@ -5,6 +5,16 @@
 import { useEffect, useRef, useState, } from 'react'
 import gsap from 'gsap'
 import './global.css'
+import useSWR from 'swr'
+
+// Fetch function for SWR
+const fetcher = async (url: string) => {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error('Failed to fetch data')
+  }
+  return response.json()
+}
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -12,7 +22,13 @@ export default function Home() {
   const loopRef = useRef<HTMLVideoElement>(null)
   const [formData, setFormData] = useState({ name: '', email: '' })
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight })
+  const [tsCode, setTsCode] = useState<string>('') // The TypeScript code
+  const [savedGames, setSavedGames] = useState<any[]>([]) // List of saved games
+  const [gameName, setGameName] = useState<string>('') // Name of the generated game
+  // const { data: savedGames, error } = useSWR('/api/games', fetcher)
 
+  // if (error) return <div>Error loading games...</div>
+  // if (!savedGames) return <div>Loading games...</div>
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = true; // Ensure it's muted
@@ -42,7 +58,7 @@ export default function Home() {
     })
   }, []);
 
-  
+  console.log(savedGames.length)
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -50,23 +66,94 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+  
     try {
-      const response = await fetch("/api/addGame", {
+      const response = await fetch("/api/games", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name, description }),
       });
-
+  
       const data = await response.json();
-      setMessage(data.message || "Error adding game.");
+  
+      if (response.ok) {
+        setMessage("Game added successfully!");
+      } else {
+        setMessage(data.message || "Error adding game.");
+      }
     } catch (error) {
       setMessage("Error connecting to API.");
       console.error(error);
     }
   };
+  
+  
+
+   // Save the generated game to MongoDB
+   const handleSaveGame = async () => {
+    if (!gameName || !tsCode) {
+      alert('Please provide a game name and TypeScript code.')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/games', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gameName, tsCode }),
+      })
+      const result = await response.json()
+      if (response.ok) {
+        alert('Game saved successfully')
+        fetchSavedGames() // Refresh the list of saved games
+      } else {
+        alert(result.error || 'Failed to save game')
+      }
+    } catch (error) {
+      alert('Error saving game')
+    }
+  }
+
+  // Load the saved games from MongoDB
+  const fetchSavedGames = async () => {
+    try {
+      const response = await fetch('/api/games')
+      const result = await response.json()
+      if (response.ok) {
+        console.log(response)
+        console.log(result)
+        setSavedGames(result)
+      } else {
+        alert(result.error || 'Failed to load games')
+      }
+    } catch (error) {
+      alert('Error loading games')
+    }
+  }
+
+  // Load a saved game and populate the TypeScript code in the editor
+  const handleAllGames = async () => {
+    try {
+      const response = await fetch('/api/games')
+      const result = await response.json()
+      if (response.ok) {
+        setSavedGames(result) // Update the savedGames list
+      } else {
+        alert(result.error || 'Failed to load games')
+      }
+    } catch (error) {
+      alert('Error loading games')
+    }
+  }
+
+  const handleLoadGame = (game: any) => {
+    setGameName(game.gameName)
+    setTsCode(game.tsCode)
+  }
 
   return (
     <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
@@ -150,6 +237,41 @@ export default function Home() {
               className="bg-green-500 text-white px-4 py-2 rounded-lg">
               Next Page</button></a>
           </div>
+          <div className="mt-6">
+          <button
+            onClick={handleSaveGame}
+            className="px-6 py-2 bg-green-600 rounded-lg text-white font-semibold mr-4"
+          >
+            Save Game
+          </button>
+          <button
+            onClick={handleAllGames}
+            className="px-6 py-2 bg-blue-600 rounded-lg text-white font-semibold"
+          >
+            All Games
+          </button>
+
+    </div>
+        </div>
+        {/* List of saved games */}
+        <div className="mt-6">
+          <h3 className="text-lg font-medium">Saved Games</h3>
+          <ul className="list-none p-0">
+            {savedGames.length === 0 ? (
+              <p>No saved games found.</p>
+            ) : (
+              savedGames.map((game) => (
+                <li key={game._id} className="mt-2">
+                  <button
+                    onClick={() => handleLoadGame(game)}
+                    className="text-blue-400 underline text-sm"
+                  >
+                    {game.gameName}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
         </div>
       </div>
     </div>
