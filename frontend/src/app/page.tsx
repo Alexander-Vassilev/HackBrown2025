@@ -5,16 +5,9 @@
 import { useEffect, useRef, useState, } from 'react'
 import gsap from 'gsap'
 import './global.css'
-import useSWR from 'swr'
+import { useRouter } from 'next/navigation';
 
-// Fetch function for SWR
-const fetcher = async (url: string) => {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error('Failed to fetch data')
-  }
-  return response.json()
-}
+
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -26,6 +19,7 @@ export default function Home() {
   const [savedGames, setSavedGames] = useState<any[]>([]) // List of saved games
   const [gameName, setGameName] = useState<string>('') // Name of the generated game
   // const { data: savedGames, error } = useSWR('/api/games', fetcher)
+  const router = useRouter();
 
   // if (error) return <div>Error loading games...</div>
   // if (!savedGames) return <div>Loading games...</div>
@@ -136,19 +130,9 @@ export default function Home() {
   }
 
   // Load a saved game and populate the TypeScript code in the editor
-  const handleAllGames = async () => {
-    try {
-      const response = await fetch('/api/games')
-      const result = await response.json()
-      if (response.ok) {
-        setSavedGames(result) // Update the savedGames list
-      } else {
-        alert(result.error || 'Failed to load games')
-      }
-    } catch (error) {
-      alert('Error loading games')
-    }
-  }
+  const handleAllGames = () => {
+    router.push('/galleryPage'); // Redirect to gallery page
+  };
 
   const handleLoadGame = (game: any) => {
     setGameName(game.gameName)
@@ -252,29 +236,11 @@ export default function Home() {
           </button>
 
     </div>
-        </div>
-        {/* List of saved games */}
-        <div className="mt-6">
-          <h3 className="text-lg font-medium">Saved Games</h3>
-          <ul className="list-none p-0">
-            {savedGames.length === 0 ? (
-              <p>No saved games found.</p>
-            ) : (
-              savedGames.map((game) => (
-                <li key={game._id} className="mt-2">
-                  <button
-                    onClick={() => handleLoadGame(game)}
-                    className="text-blue-400 underline text-sm"
-                  >
-                    {game.gameName}
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-      </div>
     </div>
+    </div>
+    </div>
+
+
   )
 }
 
