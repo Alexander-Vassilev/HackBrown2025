@@ -17,6 +17,8 @@ const connectToDatabase = async () => {
 const gameSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   description: { type: String, required: true },
+  gameCode: { type: String, required: true }, // HTML + CSS
+  gameScript: { type: String, required: true }, // JavaScript
 });
 
 const Game = mongoose.models.Game || mongoose.model('Game', gameSchema);
@@ -35,13 +37,13 @@ export async function GET() {
 // Handle POST (Save a new game)
 export async function POST(req: Request) {
   try {
-    const { name, description } = await req.json();
-    if (!name || !description) {
+    const { name, description, gameCode, gameScript } = await req.json();
+    if (!name || !description || !gameCode || !gameScript) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     await connectToDatabase();
-    const newGame = new Game({ name, description });
+    const newGame = new Game({ name, description, gameCode, gameScript });
     await newGame.save();
 
     return NextResponse.json({ message: 'Game saved successfully' }, { status: 201 });

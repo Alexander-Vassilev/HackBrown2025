@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-export default async function handler(req: { method: string; body: { name: any; description: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: unknown): void; new(): any; }; }; }) {
+export default async function handler(req: { method: string; body: { name: any; description: any; gameCode: any; gameScript: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: unknown): void; new(): any; }; }; }) {
   if (req.method === 'POST') {
     try {
       const response = await fetch('https://jkdya16z5b.execute-api.us-east-2.amazonaws.com/', {
@@ -11,6 +11,8 @@ export default async function handler(req: { method: string; body: { name: any; 
         body: JSON.stringify({
           name: req.body.name,
           description: req.body.description,
+          gameCode: req.body.gameCode,  // Include gameCode
+          gameScript: req.body.gameScript,  // Include gameScript
         }),
       });
 

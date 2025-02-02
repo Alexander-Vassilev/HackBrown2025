@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import GameCard from '../components/Card'; // Import the Card component
+import { useRouter } from 'next/navigation';
 
 export default function GalleryPage() {
   const [savedGames, setSavedGames] = useState<any[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchSavedGames = async () => {
@@ -24,6 +26,11 @@ export default function GalleryPage() {
     fetchSavedGames();
   }, []);
 
+  const handleGameClick = async (gameId: string) => {
+    router.push("../")
+    
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-900 text-white p-8">
       <h1 className="text-4xl font-bold mb-6">Gallery of Saved Games</h1>
@@ -31,7 +38,11 @@ export default function GalleryPage() {
         {savedGames.length === 0 ? (
           <p>No saved games found.</p>
         ) : (
-          savedGames.map((game) => <GameCard key={game._id} game={game} />)
+          savedGames.map((game) => (
+            <div key={game._id} onClick={() => handleGameClick(game._id)}>
+              <GameCard game={game} />
+            </div>
+          ))
         )}
       </div>
       <button

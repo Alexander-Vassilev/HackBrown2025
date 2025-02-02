@@ -17,6 +17,8 @@ export default function Home() {
   const gameRenderer = useRef<HTMLDivElement>(null)
   const restartGameCreationButton = useRef<HTMLButtonElement>(null)
   const [formData, setFormData] = useState({ name: '', email: '' })
+  const [savedGames, setSavedGames] = useState<any[]>([]) // List of saved games
+
 
   const generate = async (prompt: string) => {
     const headers = {
@@ -67,6 +69,8 @@ export default function Home() {
     gameRenderer.current!.innerHTML = gameCreation
   }
 
+  const router = useRouter();
+
   const generateGame = async () => {
       
     setGenerating(true)
@@ -86,9 +90,13 @@ export default function Home() {
 
     setGenerating(false)
 
-    console.log(res.data.body["response"])
+    // console.log(res.data.body["response"])
     let generated_res = JSON.parse(res.data.body["response"])
     setCurrentGame(generated_res)
+    console.log(name)
+    console.log(description)
+    console.log(generated_res["html-css"])
+    console.log(generated_res["script"])
 
     gameRenderer.current!.innerHTML = generated_res["html-css"]
 
@@ -99,34 +107,45 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    let retries = 0
+    let retries = 0;
 
     while (retries < 3) {
-
       try {
-        await generateGame()
-        break
+        await generateGame();
+        break;
       } catch {
-        retries += 1
+        retries += 1;
       }
-
     }
 
-    // try {
-    //   const response = await fetch("/api/addGame", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({ name, description }),
-    //   });
+    if (currentGame) {
+      try {
+        const response = await fetch("/api/addGame", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            gameCode: currentGame["html-css"],
+            gameScript: currentGame["script"]
+          }),
+        });
 
-    //   const data = await response.json();
-    //   setMessage(data.message || "Error adding game.");
-    // } catch (error) {
-    //   setMessage("Error connecting to API.");
-    //   console.error(error);
-    // }
+        const data = await response.json();
+        setMessage(data.message || "Error adding game.");
+      } catch (error) {
+        setMessage("Error connecting to API.");
+        console.error(error);
+      }
+    }
+  };
+
+
+  // Load a saved game and populate the TypeScript code in the editor
+  const handleAllGames = () => {
+    router.push('/galleryPage'); // Redirect to gallery page
   };
 
   return (
@@ -222,6 +241,15 @@ export default function Home() {
               className="bg-green-500 text-white px-4 py-2 rounded-lg">
               Next Page</button></a>
           </div>
+          <div className="mt-6">
+          <button
+            onClick={handleAllGames}
+            className="px-6 py-2 bg-blue-600 rounded-lg text-white font-semibold"
+          >
+            All Games
+          </button>
+
+        </div>
         </div>
       </div>
       <div className='absolute bottom-0 w-full flex justify-center'>
@@ -236,30 +264,8 @@ export default function Home() {
 
     </div>
         </div>
-        {/* List of saved games */}
-        <div className="mt-6">
-          <h3 className="text-lg font-medium">Saved Games</h3>
-          <ul className="list-none p-0">
-            {savedGames.length === 0 ? (
-              <p>No saved games found.</p>
-            ) : (
-              savedGames.map((game) => (
-                <li key={game._id} className="mt-2">
-                  <button
-                    onClick={() => handleLoadGame(game)}
-                    className="text-blue-400 underline text-sm"
-                  >
-                    {game.gameName}
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
       </div>
-    </div>
 
 
   )
 }
-
