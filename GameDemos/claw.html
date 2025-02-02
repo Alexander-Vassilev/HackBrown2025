@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claw Machine Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+            background: url('https://www.grandslamcoonrapids.com/application/files/8716/7096/8251/ArcadeHeader.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="500" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        
+        let claw = {
+            x: 50,
+            y: 50,
+            width: 80,
+            height: 80,
+            movingRight: true,
+            movingDown: false,
+            originalY: 50,
+            speed: 2,
+            image: new Image()
+        };
+        claw.image.src = "https://cdn.theatlantic.com/media/mt/politics/the%20claw.png";
+        
+        let objects = [];
+        let collected = 0;
+        let gameRunning = true;
+        
+        for (let i = 0; i < 5; i++) {
+            objects.push({
+                x: Math.random() * (canvas.width - 50),
+                y: Math.random() * (canvas.height - 200) + 200,
+                width: 50,
+                height: 50,
+                grabbed: false
+            });
+        }
+        
+        function update() {
+            if (!gameRunning) return;
+            
+            if (!claw.movingDown) {
+                claw.x += claw.movingRight ? claw.speed : -claw.speed;
+                if (claw.x + claw.width >= canvas.width || claw.x <= 0) {
+                    claw.movingRight = !claw.movingRight;
+                }
+            } else {
+                claw.y += 4;
+                if (claw.y >= canvas.height - 100) {
+                    let grabbedObj = objects.find(obj => !obj.grabbed && claw.x < obj.x + obj.width && claw.x + claw.width > obj.x);
+                    if (grabbedObj) {
+                        grabbedObj.grabbed = true;
+                        collected++;
+                        if (collected >= 5) {
+                            setTimeout(() => alert("You Win!"), 100);
+                            gameRunning = false;
+                        }
+                    }
+                    claw.movingDown = false;
+                }
+            }
+            
+            if (!claw.movingDown && claw.y > claw.originalY) {
+                claw.y -= 4;
+            }
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(claw.image, claw.x, claw.y, claw.width, claw.height);
+            
+            ctx.fillStyle = "red";
+            objects.forEach(obj => {
+                if (!obj.grabbed) {
+                    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                }
+            });
+        }
+        
+        function loop() {
+            update();
+            draw();
+            if (gameRunning) requestAnimationFrame(loop);
+        }
+        
+        document.addEventListener("keydown", event => {
+            if (event.code === "Space" && !claw.movingDown && claw.y === claw.originalY) {
+                claw.movingDown = true;
+            }
+        });
+        
+        loop();
+    </script>
+</body>
+</html>
