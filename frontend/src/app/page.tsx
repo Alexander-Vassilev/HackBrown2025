@@ -64,6 +64,12 @@ export default function Home() {
   const [message, setMessage] = useState<string>("");
   const [currentGame, setCurrentGame] = useState(null)
   const [gameCreation, setGameCreation] = useState<string>("");
+  const [isValid, setIsValid] = useState(false);
+
+  useEffect(() => {
+    // Check if both fields are filled
+    setIsValid(name.trim().length > 0 && description.trim().length > 0);
+  }, [name, description]);
 
   const handleGameUpdate = (refinedGame) => {
     setCurrentGame(refinedGame);
@@ -129,13 +135,45 @@ export default function Home() {
     gameRenderer.current!.innerHTML = gameCreation
   }
 
+  const promptUser = async (question: string, validate: (input: string) => boolean) => {
+    let answer = "";
+    do {
+      answer = window.prompt(question) || "";
+      if (!validate(answer)) {
+        alert("Invalid input. Please try again.");
+      }
+    } while (!validate(answer));
+    return answer;
+  };
+
   const router = useRouter();
 
   const generateGame = async () => {
 
+      
+    // const genre = await promptUser(
+    //   "What is the genre/style of the game? (e.g., platformer, puzzle, shooter)",
+    //   (input) => true
+    // );
+  
+    // const movement = await promptUser(
+    //   "How does the player move? (e.g., arrow keys, WASD, mouse)",
+    //   (input) => true
+    // );
+  
+    // const obstacles = await promptUser(
+    //   "What obstacles or constraints exist in the game?",
+    //   (input) => true
+    // );
+  
+    // const winCondition = await promptUser(
+    //   "What is the win condition for the game?",
+    //   (input) => true
+    // );
+  
     setGenerating(true)
 
-    let res = await generate(`Create a embeded js game in a div named ${name} about ${description}.
+    let res = await generate(`Create a embeded js game in a div named ${name}, about ${description}.
       Task:
       - Output in raw json format (no need for code blocks \`\`\`) with fields "chain-of-thought", "game-details", "html-css", and "script".
       - The "script", will be attached to a script element, and the "html-css" will be rendered inside innerHTML.
@@ -150,16 +188,23 @@ export default function Home() {
       - For the script, makes sure it runs immediately, do not use an event listener to initialize it.`)
 
     setGenerating(false)
+//- If there is a good character, use the image "../../public/sprite.png" in the public folder
+      //- If there is an enemy, use the image "../../public/enemy.png"
+    // console.log(res.data.body["response"])
+    //      - use "sprite.png" and "enemy.png" in the public folder for good and evil, respectively
 
-    console.log(res.data.body["response"])
-    let generated_res = JSON.parse(res.data.body["response"])
+    let rawResponse = res.data.body["response"];
+    console.log(rawResponse); // Log the response to inspect the content
 
-    console.log(generated_res)
-    setCurrentGame(generated_res)
-    console.log(name)
-    console.log(description)
-    console.log(generated_res["html-css"])
-    console.log(generated_res["script"])
+    // Sanitize the response by replacing problematic control characters
+    let sanitizedResponse = rawResponse.replace(/[\x00-\x1F\x7F]/g, '');
+
+    let generated_res = JSON.parse(sanitizedResponse);
+    setCurrentGame(generated_res);
+    console.log(name);
+    console.log(description);
+    console.log(generated_res["html-css"]);
+    console.log(generated_res["script"]);
 
     gameRenderer.current!.innerHTML = generated_res["html-css"]
 
@@ -172,14 +217,13 @@ export default function Home() {
     e.preventDefault();
     let retries = 0;
 
-    while (retries < 3) {
+    // while (retries < 3) {
       try {
-        await generateGame();
-        break;
+        generateGame();
+        // break;
       } catch {
         retries += 1;
       }
-    }
 
     console.log(currentGame)
     // go to useEffect of currentGame
@@ -273,6 +317,16 @@ export default function Home() {
           </form>
 
           {message && <p className="mt-4 text-green-600 font-semibold">{message}</p>}
+
+          {/* Loading bar */}
+          {generating && (
+            <div className="w-full mt-4">
+              <div className="bg-gray-200 h-2 rounded-full w-full">
+                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }}></div>
+              </div>
+              <p className="text-center text-gray-500 mt-2">Generating game...</p>
+            </div>
+          )}
 
           {/* Bottom buttons */}
           {/* <div className='w-full p-4 flex flex-row justify-center items-center gap-x-4'>
